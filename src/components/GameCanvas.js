@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 
-export default function GameCanvas({ onReward, settings }) {
+export default function GameCanvas({ onReward, settings, gameMode }) {
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState('START'); // START, PLAYING, WON_STAGE, GAME_OVER
   const [currentStage, setCurrentStage] = useState(1);
@@ -56,7 +56,7 @@ export default function GameCanvas({ onReward, settings }) {
     bricks: [],
     particles: [], // For bubble explosion
     animationId: null,
-    bgImageObj: null,
+    bgImages: {},
     rightPressed: false,
     leftPressed: false,
     score: 0,
@@ -126,10 +126,15 @@ export default function GameCanvas({ onReward, settings }) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     const g = gameRef.current;
 
-    if (g.bgImageObj) {
+    let currentBgImg = null;
+    if (g.stage >= 3 && g.bgImages[3]) currentBgImg = g.bgImages[3];
+    else if (g.stage >= 2 && g.bgImages[2]) currentBgImg = g.bgImages[2];
+    else if (g.bgImages[1]) currentBgImg = g.bgImages[1];
+
+    if (currentBgImg) {
       ctx.globalAlpha = 0.15; // Lighter transparency for the logo
-      const imgW = g.bgImageObj.width;
-      const imgH = g.bgImageObj.height;
+      const imgW = currentBgImg.width;
+      const imgH = currentBgImg.height;
       const canvasW = ctx.canvas.width;
       const canvasH = ctx.canvas.height;
       const pos = settings?.bgImagePosition || 'center';
@@ -138,32 +143,32 @@ export default function GameCanvas({ onReward, settings }) {
         const ratio = Math.max(canvasW / imgW, canvasH / imgH);
         const newW = imgW * ratio;
         const newH = imgH * ratio;
-        ctx.drawImage(g.bgImageObj, (canvasW - newW) / 2, (canvasH - newH) / 2, newW, newH);
+        ctx.drawImage(currentBgImg, (canvasW - newW) / 2, (canvasH - newH) / 2, newW, newH);
       } else if (pos === 'grid') {
         const ratio = 0.3; // Grid size
         const newW = imgW * ratio;
         const newH = imgH * ratio;
         for (let x = 0; x < canvasW; x += newW) {
           for (let y = 0; y < canvasH; y += newH) {
-            ctx.drawImage(g.bgImageObj, x, y, newW, newH);
+            ctx.drawImage(currentBgImg, x, y, newW, newH);
           }
         }
       } else if (pos === 'topleft') {
         const ratio = Math.min(canvasW / imgW, canvasH / imgH) * 0.25;
         const newW = imgW * ratio;
         const newH = imgH * ratio;
-        ctx.drawImage(g.bgImageObj, 20, 20, newW, newH);
+        ctx.drawImage(currentBgImg, 20, 20, newW, newH);
       } else if (pos === 'topright') {
         const ratio = Math.min(canvasW / imgW, canvasH / imgH) * 0.25;
         const newW = imgW * ratio;
         const newH = imgH * ratio;
-        ctx.drawImage(g.bgImageObj, canvasW - newW - 20, 20, newW, newH);
+        ctx.drawImage(currentBgImg, canvasW - newW - 20, 20, newW, newH);
       } else {
         // center
         const ratio = Math.min(canvasW / imgW, canvasH / imgH) * 0.5; // Max 50% of canvas size
         const newW = imgW * ratio;
         const newH = imgH * ratio;
-        ctx.drawImage(g.bgImageObj, (canvasW - newW) / 2, (canvasH - newH) / 2, newW, newH);
+        ctx.drawImage(currentBgImg, (canvasW - newW) / 2, (canvasH - newH) / 2, newW, newH);
       }
       ctx.globalAlpha = 1.0;
     }
@@ -176,9 +181,9 @@ export default function GameCanvas({ onReward, settings }) {
       ctx.font = '20px "Outfit", sans-serif';
       ctx.fillText('Haz clic para jugar', ctx.canvas.width/2, ctx.canvas.height/2 + 20);
       
-      if (settings?.gameMode === 'time_attack') {
+      if (gameMode === 'time_attack') {
         ctx.fillStyle = '#ff9f43';
-        ctx.fillText(`Modo Contrarreloj: ${settings.timeAttackSeconds || 60}s`, ctx.canvas.width/2, ctx.canvas.height/2 + 60);
+        ctx.fillText(`Modo Contrarreloj: ${settings?.timeAttackSeconds || 60}s`, ctx.canvas.width/2, ctx.canvas.height/2 + 60);
       }
       return;
     }
@@ -247,7 +252,7 @@ export default function GameCanvas({ onReward, settings }) {
     ctx.fillText(`Nivel: ${g.stage}`, ctx.canvas.width - 10, 20);
 
     // Draw Timer if Time Attack
-    if (settings?.gameMode === 'time_attack') {
+    if (gameMode === 'time_attack') {
       ctx.font = '24px "Outfit", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = g.timeLeft <= 10 ? '#ff0055' : '#feca57';
@@ -260,7 +265,7 @@ export default function GameCanvas({ onReward, settings }) {
     if (g.state !== 'PLAYING') return;
 
     // Time Attack Logic
-    if (settings?.gameMode === 'time_attack') {
+    if (gameMode === 'time_attack') {
       const now = performance.now();
       const dt = (now - g.lastTime) / 1000;
       g.lastTime = now;
@@ -464,16 +469,23 @@ export default function GameCanvas({ onReward, settings }) {
   }, [gameState]);
 
   useEffect(() => {
+    gameRef.current.bgImages = {};
     if (settings?.bgImagePath) {
-      const img = new Image();
-      img.src = settings.bgImagePath;
-      img.onload = () => {
-        gameRef.current.bgImageObj = img;
-      };
-    } else {
-      gameRef.current.bgImageObj = null;
+      const img1 = new Image();
+      img1.src = settings.bgImagePath;
+      img1.onload = () => gameRef.current.bgImages[1] = img1;
     }
-  }, [settings?.bgImagePath]);
+    if (settings?.bgImagePathStage2) {
+      const img2 = new Image();
+      img2.src = settings.bgImagePathStage2;
+      img2.onload = () => gameRef.current.bgImages[2] = img2;
+    }
+    if (settings?.bgImagePathStage3) {
+      const img3 = new Image();
+      img3.src = settings.bgImagePathStage3;
+      img3.onload = () => gameRef.current.bgImages[3] = img3;
+    }
+  }, [settings?.bgImagePath, settings?.bgImagePathStage2, settings?.bgImagePathStage3]);
 
   // Method to resume after reward (Game Over context)
   const resumeFromReward = () => {

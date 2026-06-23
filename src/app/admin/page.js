@@ -8,8 +8,8 @@ export default function AdminPage() {
   const [settings, setSettings] = useState(null);
   const [leads, setLeads] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const [files, setFiles] = useState({ 1: null, 2: null, 3: null });
+  const [uploadingStage, setUploadingStage] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   const showToast = (message, type = 'success') => {
@@ -64,12 +64,13 @@ export default function AdminPage() {
     }
   };
 
-  const handleImageUpload = async (e) => {
-    e.preventDefault();
-    if (!file) return;
-    setUploading(true);
+  const handleImageUpload = async (stage) => {
+    const fileToUpload = files[stage];
+    if (!fileToUpload) return;
+    setUploadingStage(stage);
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('image', fileToUpload);
+    formData.append('stageField', stage.toString());
     try {
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -77,12 +78,12 @@ export default function AdminPage() {
       });
       const data = await res.json();
       setSettings(data);
-      showToast('Imagen subida y aplicada correctamente', 'success');
+      showToast(`Imagen del Nivel ${stage} subida correctamente`, 'success');
+      setFiles(prev => ({ ...prev, [stage]: null }));
     } catch (err) {
-      showToast('Error al subir imagen', 'error');
+      showToast(`Error al subir imagen del Nivel ${stage}`, 'error');
     } finally {
-      setUploading(false);
-      setFile(null);
+      setUploadingStage(null);
     }
   };
 
@@ -158,23 +159,55 @@ export default function AdminPage() {
               </select>
             </div>
 
-            <div className="input-group" style={{ marginTop: '1rem' }}>
-              <label>Logo / Imagen de Fondo</label>
-              {settings.bgImagePath && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <img src={settings.bgImagePath} alt="Logo" style={{ maxWidth: '200px', borderRadius: '8px' }} />
+            <div className="input-group" style={{ marginTop: '1rem', border: '1px solid rgba(255,255,255,0.1)', padding: '1rem', borderRadius: '8px' }}>
+              <label style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Imágenes de Fondo por Nivel</label>
+              
+              {/* Nivel 1 */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <strong>Nivel 1 (Por Defecto)</strong>
+                {settings.bgImagePath && (
+                  <div style={{ margin: '0.5rem 0' }}>
+                    <img src={settings.bgImagePath} alt="Logo Nivel 1" style={{ maxWidth: '150px', borderRadius: '8px' }} />
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <input type="file" accept="image/*" onChange={e => setFiles({...files, 1: e.target.files[0]})} style={{ flex: 1 }} />
+                  <button type="button" onClick={() => handleImageUpload(1)} disabled={!files[1] || uploadingStage === 1} className="btn-secondary" style={{ margin: 0, padding: '0.5rem 1rem' }}>
+                    {uploadingStage === 1 ? 'Subiendo...' : 'Subir N1'}
+                  </button>
                 </div>
-              )}
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={e => setFile(e.target.files[0])}
-                  style={{ padding: '0.5rem', flex: 1 }}
-                />
-                <button type="button" onClick={handleImageUpload} disabled={!file || uploading} className="btn-secondary" style={{ marginTop: 0 }}>
-                  {uploading ? 'Subiendo...' : 'Subir Imagen'}
-                </button>
+              </div>
+
+              {/* Nivel 2 */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <strong>Nivel 2</strong>
+                {settings.bgImagePathStage2 && (
+                  <div style={{ margin: '0.5rem 0' }}>
+                    <img src={settings.bgImagePathStage2} alt="Logo Nivel 2" style={{ maxWidth: '150px', borderRadius: '8px' }} />
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <input type="file" accept="image/*" onChange={e => setFiles({...files, 2: e.target.files[0]})} style={{ flex: 1 }} />
+                  <button type="button" onClick={() => handleImageUpload(2)} disabled={!files[2] || uploadingStage === 2} className="btn-secondary" style={{ margin: 0, padding: '0.5rem 1rem' }}>
+                    {uploadingStage === 2 ? 'Subiendo...' : 'Subir N2'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Nivel 3 */}
+              <div style={{ marginBottom: '0.5rem' }}>
+                <strong>Nivel 3+</strong>
+                {settings.bgImagePathStage3 && (
+                  <div style={{ margin: '0.5rem 0' }}>
+                    <img src={settings.bgImagePathStage3} alt="Logo Nivel 3" style={{ maxWidth: '150px', borderRadius: '8px' }} />
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <input type="file" accept="image/*" onChange={e => setFiles({...files, 3: e.target.files[0]})} style={{ flex: 1 }} />
+                  <button type="button" onClick={() => handleImageUpload(3)} disabled={!files[3] || uploadingStage === 3} className="btn-secondary" style={{ margin: 0, padding: '0.5rem 1rem' }}>
+                    {uploadingStage === 3 ? 'Subiendo...' : 'Subir N3+'}
+                  </button>
+                </div>
               </div>
             </div>
 

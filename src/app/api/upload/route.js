@@ -7,6 +7,7 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get('image');
+    const stageField = formData.get('stageField') || '1';
     
     if (!file) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
@@ -27,10 +28,20 @@ export async function POST(request) {
       settings = await prisma.settings.create({ data: {} });
     }
 
+    // Determine which field to update
+    const dataToUpdate = {};
+    if (stageField === '2') {
+      dataToUpdate.bgImagePathStage2 = bgImagePath;
+    } else if (stageField === '3') {
+      dataToUpdate.bgImagePathStage3 = bgImagePath;
+    } else {
+      dataToUpdate.bgImagePath = bgImagePath;
+    }
+
     // Update settings with new image path
     const updated = await prisma.settings.update({
       where: { id: settings.id },
-      data: { bgImagePath }
+      data: dataToUpdate
     });
 
     return NextResponse.json(updated);

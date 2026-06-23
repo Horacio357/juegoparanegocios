@@ -24,7 +24,9 @@ model Settings {
   maxDiscount      Int    @default(50)
   gameMode         String @default("classic") // classic, time_attack
   timeAttackSeconds Int   @default(60)
-  bgImagePath      String?
+  bgImagePath      String? // Default / Stage 1
+  bgImagePathStage2 String?
+  bgImagePathStage3 String?
   bgImagePosition  String @default("center") // cover, center, topleft, topright, grid
   updatedAt        DateTime @updatedAt
 }

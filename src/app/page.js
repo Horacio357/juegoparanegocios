@@ -3,12 +3,16 @@ import { useEffect, useState } from 'react';
 import GameCanvas from '@/components/GameCanvas';
 import LeadForm from '@/components/LeadForm';
 import RegistrationForm from '@/components/RegistrationForm';
+import MainMenu from '@/components/MainMenu';
+import Leaderboard from '@/components/Leaderboard';
 
 export default function Home() {
   const [settings, setSettings] = useState(null);
   const [earnedDiscount, setEarnedDiscount] = useState(null);
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentScreen, setCurrentScreen] = useState('MENU'); // MENU, REGISTER, GAME, RANKING
+  const [selectedMode, setSelectedMode] = useState('classic');
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -34,6 +38,21 @@ export default function Home() {
   const handleFormClose = () => {
     setEarnedDiscount(null);
     setPlayerData(null); // Reset to allow another person to play
+    setCurrentScreen('MENU');
+  };
+
+  const handleSelectMode = (mode) => {
+    if (mode === 'ranking') {
+      setCurrentScreen('RANKING');
+    } else {
+      setSelectedMode(mode);
+      setCurrentScreen('REGISTER');
+    }
+  };
+
+  const handleRegister = (data) => {
+    setPlayerData(data);
+    setCurrentScreen('GAME');
   };
 
   if (loading) {
@@ -48,10 +67,20 @@ export default function Home() {
       </header>
 
       <section className="game-section">
-        {!playerData ? (
-          <RegistrationForm onRegister={setPlayerData} />
-        ) : (
-          <GameCanvas onReward={handleReward} settings={settings} />
+        {currentScreen === 'MENU' && (
+          <MainMenu onSelectMode={handleSelectMode} />
+        )}
+        
+        {currentScreen === 'RANKING' && (
+          <Leaderboard onBack={() => setCurrentScreen('MENU')} />
+        )}
+
+        {currentScreen === 'REGISTER' && (
+          <RegistrationForm onRegister={handleRegister} />
+        )}
+
+        {currentScreen === 'GAME' && (
+          <GameCanvas onReward={handleReward} settings={settings} gameMode={selectedMode} />
         )}
       </section>
 

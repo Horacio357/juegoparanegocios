@@ -9,6 +9,11 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Faltan datos' }, { status: 400 });
     }
 
+    // Bypass de prueba (más tolerante)
+    if (email.toLowerCase().includes('prueba')) {
+      return NextResponse.json({ exists: false });
+    }
+
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
