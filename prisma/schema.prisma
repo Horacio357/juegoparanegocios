@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Lead {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String
+  email        String
+  stageReached Int
+  discountWon  Int
+  createdAt    DateTime @default(now())
+}
+
+model Settings {
+  id             String   @id @default(cuid())
+  colorTheme     Int      @default(1) // 1 to 5
+  discountPerBrick Float  @default(0.5)
+  maxDiscount      Int    @default(50)
+  gameMode         String @default("classic") // classic, time_attack
+  timeAttackSeconds Int   @default(60)
+  bgImagePath      String?
+  bgImagePosition  String @default("center") // cover, center, topleft, topright, grid
+  updatedAt        DateTime @updatedAt
+}
