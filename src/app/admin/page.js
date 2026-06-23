@@ -27,15 +27,30 @@ export default function AdminPage() {
   }, [isAuthenticated]);
 
   const fetchSettings = async () => {
-    const res = await fetch('/api/settings');
-    const data = await res.json();
-    setSettings(data);
+    try {
+      const res = await fetch('/api/settings');
+      if (!res.ok) throw new Error('API Error');
+      const data = await res.json();
+      setSettings(data);
+    } catch (err) {
+      console.error(err);
+      showToast('Error cargando configuración. La base de datos puede estar desactualizada.', 'error');
+      // Set default settings to prevent crash
+      setSettings({ colorTheme: 1, discountPerBrick: 0.5, maxDiscount: 50, gameMode: 'classic' });
+    }
   };
 
   const fetchLeads = async () => {
-    const res = await fetch('/api/leads');
-    const data = await res.json();
-    setLeads(data);
+    try {
+      const res = await fetch('/api/leads');
+      if (!res.ok) throw new Error('API Error');
+      const data = await res.json();
+      setLeads(data);
+    } catch (err) {
+      console.error(err);
+      showToast('Error cargando leads.', 'error');
+      setLeads([]);
+    }
   };
 
   const handleLogin = (e) => {
