@@ -446,10 +446,28 @@ export default function GameCanvas({ onReward, settings, gameMode }) {
       g.paddle.x = Math.max(0, Math.min(canvas.width - g.paddle.width, newX));
     };
 
+    const handleTouchMove = (e) => {
+      if (g.state !== 'PLAYING') return;
+      if (e.cancelable) e.preventDefault(); // Evitar scroll
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const relativeX = (e.touches[0].clientX - rect.left) * scaleX;
+      
+      let newX = relativeX - g.paddle.width / 2;
+      g.paddle.x = Math.max(0, Math.min(canvas.width - g.paddle.width, newX));
+    };
+
+    const handleTouchStart = (e) => {
+      if (e.cancelable) e.preventDefault();
+      handleClick();
+    };
+
     window.addEventListener('keydown', handleKeyDown, { passive: false });
     window.addEventListener('keyup', handleKeyUp);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('click', handleClick);
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
 
     return () => {
       cancelAnimationFrame(g.animationId);
@@ -457,6 +475,8 @@ export default function GameCanvas({ onReward, settings, gameMode }) {
       window.removeEventListener('keyup', handleKeyUp);
       canvas.removeEventListener('mousemove', handleMouseMove);
       canvas.removeEventListener('click', handleClick);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchstart', handleTouchStart);
     };
   }, []);
 
